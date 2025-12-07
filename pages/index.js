@@ -307,9 +307,9 @@ export default function CraftTimeBlocker() {
           <meta name="description" content="Time blocking app for Craft" />
           <meta name="viewport" content="width=device-width, initial-scale=1" />
         </Head>
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
+        <div className="min-h-screen p-8 bg-gradient-to-br from-blue-50 to-indigo-100">
           <div className="max-w-2xl mx-auto">
-            <div className="bg-white rounded-2xl shadow-xl p-8">
+            <div className="p-8 bg-white shadow-xl rounded-2xl">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-8 h-8 text-indigo-600">
                   <Clock />
@@ -319,9 +319,9 @@ export default function CraftTimeBlocker() {
                 </h1>
               </div>
 
-              <div className="space-y-4 mb-6">
+              <div className="mb-6 space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block mb-2 text-sm font-medium text-gray-700">
                     Craft Daily Notes API URL
                   </label>
                   <input
@@ -334,7 +334,7 @@ export default function CraftTimeBlocker() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                  <label className="flex items-center block gap-2 mb-2 text-sm font-medium text-gray-700">
                     <div className="w-4 h-4">
                       <Key />
                     </div>
@@ -356,7 +356,7 @@ export default function CraftTimeBlocker() {
               </div>
 
               {error && (
-                <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm flex items-start gap-2">
+                <div className="flex items-start gap-2 p-4 mb-4 text-sm text-red-700 border border-red-200 rounded-lg bg-red-50">
                   <div className="w-5 h-5 flex-shrink-0 mt-0.5">
                     <AlertCircle />
                   </div>
@@ -367,7 +367,7 @@ export default function CraftTimeBlocker() {
               <div className="flex gap-3">
                 <button
                   onClick={handleSaveConfig}
-                  className="flex-1 bg-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-indigo-700 transition-colors"
+                  className="flex-1 px-6 py-3 font-medium text-white transition-colors bg-indigo-600 rounded-lg hover:bg-indigo-700"
                 >
                   Save & Connect
                 </button>
@@ -375,13 +375,13 @@ export default function CraftTimeBlocker() {
                   <>
                     <button
                       onClick={() => setShowSettings(false)}
-                      className="px-6 py-3 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                      className="px-6 py-3 font-medium transition-colors border border-gray-300 rounded-lg hover:bg-gray-50"
                     >
                       Cancel
                     </button>
                     <button
                       onClick={handleResetConfig}
-                      className="px-6 py-3 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors"
+                      className="px-6 py-3 font-medium text-white transition-colors bg-red-600 rounded-lg hover:bg-red-700"
                     >
                       Reset
                     </button>
@@ -389,11 +389,11 @@ export default function CraftTimeBlocker() {
                 )}
               </div>
 
-              <div className="mt-8 p-4 bg-blue-50 rounded-lg">
-                <h3 className="font-semibold text-blue-900 mb-2">
+              <div className="p-4 mt-8 rounded-lg bg-blue-50">
+                <h3 className="mb-2 font-semibold text-blue-900">
                   How to get your credentials:
                 </h3>
-                <ol className="text-sm text-blue-800 space-y-2 list-decimal list-inside">
+                <ol className="space-y-2 text-sm text-blue-800 list-decimal list-inside">
                   <li>Open Craft app and go to Settings</li>
                   <li>Navigate to Integrations → API</li>
                   <li>Find &quot;Daily Notes & Tasks API&quot;</li>
@@ -421,8 +421,8 @@ export default function CraftTimeBlocker() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-        <div className="max-w-7xl mx-auto p-6">
-          <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+        <div className="p-6 mx-auto max-w-7xl">
+          <div className="p-6 mb-6 bg-white shadow-lg rounded-2xl">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 text-indigo-600">
@@ -444,7 +444,7 @@ export default function CraftTimeBlocker() {
               </div>
               <button
                 onClick={() => setShowSettings(true)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 transition-colors rounded-lg hover:bg-gray-100"
                 title="Settings"
               >
                 <div className="w-6 h-6 text-gray-600">
@@ -454,8 +454,8 @@ export default function CraftTimeBlocker() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white rounded-2xl shadow-lg p-6">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <div className="p-6 bg-white shadow-lg rounded-2xl">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-6 h-6 text-indigo-600">
                   <Calendar />
@@ -466,7 +466,7 @@ export default function CraftTimeBlocker() {
               </div>
 
               {todayBlocks.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
+                <div className="py-8 text-center text-gray-500">
                   No time blocks scheduled yet. Add tasks from the right panel!
                 </div>
               ) : (
@@ -474,11 +474,11 @@ export default function CraftTimeBlocker() {
                   {todayBlocks.map((block) => (
                     <div
                       key={block.id}
-                      className="border border-gray-200 rounded-lg p-4 hover:border-indigo-300 transition-colors"
+                      className="p-4 transition-colors border border-gray-200 rounded-lg hover:border-indigo-300"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex-1">
-                          <div className="font-medium text-gray-900 mb-2">
+                          <div className="mb-2 font-medium text-gray-900">
                             {cleanMarkdown(block.taskText)}
                           </div>
                           <div className="flex gap-2">
@@ -492,9 +492,9 @@ export default function CraftTimeBlocker() {
                                   e.target.value
                                 )
                               }
-                              className="px-2 py-1 border border-gray-300 rounded text-sm"
+                              className="px-2 py-1 text-sm border border-gray-300 rounded"
                             />
-                            <span className="text-gray-500 self-center">→</span>
+                            <span className="self-center text-gray-500">→</span>
                             <input
                               type="time"
                               value={block.endTime}
@@ -505,13 +505,13 @@ export default function CraftTimeBlocker() {
                                   e.target.value
                                 )
                               }
-                              className="px-2 py-1 border border-gray-300 rounded text-sm"
+                              className="px-2 py-1 text-sm border border-gray-300 rounded"
                             />
                           </div>
                         </div>
                         <button
                           onClick={() => deleteTimeBlock(block.id)}
-                          className="p-2 hover:bg-red-50 rounded-lg text-red-600 transition-colors"
+                          className="p-2 text-red-600 transition-colors rounded-lg hover:bg-red-50"
                           title="Remove time block"
                         >
                           <div className="w-4 h-4">
@@ -525,47 +525,47 @@ export default function CraftTimeBlocker() {
               )}
             </div>
 
-            <div className="bg-white rounded-2xl shadow-lg p-6">
+            <div className="p-6 bg-white shadow-lg rounded-2xl">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold text-gray-900">Craft Tasks</h2>
                 <button
                   onClick={() => fetchTasks(apiUrl, apiKey)}
                   disabled={loading}
-                  className="px-3 py-1 text-sm bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition-colors disabled:opacity-50"
+                  className="px-3 py-1 text-sm text-indigo-700 transition-colors bg-indigo-100 rounded-lg hover:bg-indigo-200 disabled:opacity-50"
                 >
                   {loading ? "Loading..." : "Refresh"}
                 </button>
               </div>
 
               {loading ? (
-                <div className="text-center py-8">
-                  <div className="inline-block w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+                <div className="py-8 text-center">
+                  <div className="inline-block w-8 h-8 border-4 border-indigo-200 rounded-full border-t-indigo-600 animate-spin"></div>
                   <p className="mt-2 text-gray-500">
                     Loading tasks from Craft...
                   </p>
                 </div>
               ) : error ? (
-                <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm flex items-start gap-2">
+                <div className="flex items-start gap-2 p-4 text-sm text-red-700 border border-red-200 rounded-lg bg-red-50">
                   <div className="w-5 h-5 flex-shrink-0 mt-0.5">
                     <AlertCircle />
                   </div>
                   <div>
-                    <div className="font-medium mb-1">Error loading tasks</div>
+                    <div className="mb-1 font-medium">Error loading tasks</div>
                     <div>{error}</div>
                     <button
                       onClick={() => setShowSettings(true)}
-                      className="mt-2 text-indigo-600 hover:text-indigo-700 underline text-sm"
+                      className="mt-2 text-sm text-indigo-600 underline hover:text-indigo-700"
                     >
                       Check API settings
                     </button>
                   </div>
                 </div>
               ) : unscheduledTasks.length === 0 && tasks.length > 0 ? (
-                <div className="text-center py-8 text-gray-500">
+                <div className="py-8 text-center text-gray-500">
                   All tasks are scheduled! 🎉
                 </div>
               ) : unscheduledTasks.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
+                <div className="py-8 text-center text-gray-500">
                   <p className="mb-2">No tasks found in Craft.</p>
                   <p className="text-sm">
                     Create some tasks in your Craft Daily Notes first!
@@ -576,7 +576,7 @@ export default function CraftTimeBlocker() {
                   {unscheduledTasks.map((task) => (
                     <div
                       key={task.id}
-                      className="border border-gray-200 rounded-lg p-4 hover:border-indigo-300 transition-colors"
+                      className="p-4 transition-colors border border-gray-200 rounded-lg hover:border-indigo-300"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex-1">
@@ -588,7 +588,7 @@ export default function CraftTimeBlocker() {
                               {cleanMarkdown(task.markdown)}
                             </span>
                           </div>
-                          <div className="flex gap-2 text-xs text-gray-500 ml-6">
+                          <div className="flex gap-2 ml-6 text-xs text-gray-500">
                             <span className="px-2 py-0.5 bg-gray-100 rounded">
                               {task.scope}
                             </span>
@@ -601,7 +601,7 @@ export default function CraftTimeBlocker() {
                         </div>
                         <button
                           onClick={() => addTimeBlock(task.id, task.markdown)}
-                          className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex-shrink-0"
+                          className="flex-shrink-0 p-2 text-white transition-colors bg-indigo-600 rounded-lg hover:bg-indigo-700"
                           title="Add to schedule"
                         >
                           <div className="w-4 h-4">

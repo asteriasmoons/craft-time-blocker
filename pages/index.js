@@ -359,12 +359,7 @@ export default function Home() {
       </Head>
 
       <div className={darkMode ? "dark" : ""}>
-        <div className={`min-h-screen ${
-            darkMode
-              ? "bg-slate-950"
-              : "bg-gradient-to-br from-blue-50 to-indigo-100"
-          }`}
-        >
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-950 dark:to-slate-900">
           <div className="p-6 mx-auto max-w-7xl">
             <div className="p-6 mb-6 bg-white shadow-lg rounded-2xl dark:bg-slate-900 dark:text-slate-100">
               <div className="flex items-center justify-between">

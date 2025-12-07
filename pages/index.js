@@ -113,6 +113,7 @@ export default function Home() {
   const [error, setError] = useState("");
   const [isConfigured, setIsConfigured] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
 
   // Markdown cleaner (with checkbox handling)
   const cleanMarkdown = (text = "") => {
@@ -153,6 +154,11 @@ export default function Home() {
       const savedUrl = localStorage.getItem("craftApiUrl");
       const savedKey = localStorage.getItem("craftApiKey");
       const savedBlocks = localStorage.getItem("timeBlocks");
+      const savedDark = localStorage.getItem("timeBlockerDarkMode");
+
+      if (savedDark === "true") {
+        setDarkMode(true);
+      }
 
       if (savedUrl && savedKey) {
         setApiUrl(savedUrl);
@@ -185,7 +191,13 @@ export default function Home() {
     localStorage.setItem("timeBlocks", JSON.stringify(sanitizedBlocks));
   }, [timeBlocks]);
 
-  // FIXED fetchTasks: uses .items and preserves scopes
+  // Persist dark mode
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    localStorage.setItem("timeBlockerDarkMode", darkMode ? "true" : "false");
+  }, [darkMode]);
+
+  // Fetch tasks from Craft Tasks API
   const fetchTasks = async (url, key) => {
     setLoading(true);
     setError("");
@@ -235,7 +247,6 @@ export default function Home() {
         throw new Error(`API Error: ${errorMsg}`);
       }
 
-      // Deduplicate by id
       const seen = new Set();
       const unique = allTasks.filter((task) => {
         if (seen.has(task.id)) return false;
@@ -243,7 +254,6 @@ export default function Home() {
         return true;
       });
 
-      // Sort: due-date first, then alphabetical
       unique.sort((a, b) => {
         const aHasDue = !!a.dueDate;
         const bHasDue = !!b.dueDate;
@@ -258,7 +268,7 @@ export default function Home() {
       setTasks(unique);
 
       if (unique.length === 0) {
-        setError("No tasks found in Craft. Try creating some tasks first!");
+        setError("No tasks found in Craft. Try creating some tasks first.");
       }
     } catch (err) {
       setError(`Failed to load tasks: ${err.message}`);
@@ -347,285 +357,301 @@ export default function Home() {
         <meta name="description" content="Time blocking app for Craft" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-        <div className="p-6 mx-auto max-w-7xl">
-          <div className="p-6 mb-6 bg-white shadow-lg rounded-2xl">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
-                  <Clock />
-                  <span>Craft Time Blocker</span>
-                </h1>
-                <p className="mt-1 text-sm text-gray-600">
-                  Pull tasks from your Craft task API and block out your day
-                  visually.
-                </p>
-              </div>
-              <button
-                onClick={() => setShowSettings(true)}
-                className="inline-flex items-center px-3 py-2 text-sm font-medium text-indigo-700 border border-indigo-200 rounded-lg bg-indigo-50 hover:bg-indigo-100"
-              >
-                <Key />
-                <span className="ml-2">API Settings</span>
-              </button>
-            </div>
-          </div>
 
-          {!isConfigured && (
-            <div className="p-4 mb-6 text-sm text-blue-800 border border-blue-200 bg-blue-50 rounded-xl">
-              <div className="flex">
-                <Info />
-                <div className="ml-3">
-                  <p className="font-medium">
-                    Welcome. Add your Craft Tasks API info to begin.
-                  </p>
-                  <p className="mt-1">
-                    You will need your API base URL and an API key with access
-                    to your Craft Tasks.
+      <div className={darkMode ? "dark" : ""}>
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-950 dark:to-slate-900">
+          <div className="p-6 mx-auto max-w-7xl">
+            <div className="p-6 mb-6 bg-white shadow-lg rounded-2xl dark:bg-slate-900 dark:text-slate-100">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-slate-100">
+                    <Clock />
+                    <span>Craft Time Blocker</span>
+                  </h1>
+                  <p className="mt-1 text-sm text-gray-600 dark:text-slate-300">
+                    Pull tasks from your Craft task API and block out your day
+                    visually.
                   </p>
                 </div>
-              </div>
-            </div>
-          )}
-
-          {error && (
-            <div className="p-4 mb-6 text-sm text-red-800 border border-red-200 bg-red-50 rounded-xl">
-              <div className="flex">
-                <AlertTriangle />
-                <div className="ml-3">
-                  <p className="font-medium">Something went wrong.</p>
-                  <p className="mt-1">{error}</p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {showSettings && (
-            <div className="p-6 mb-6 bg-white border border-gray-200 shadow-md rounded-2xl">
-              <h2 className="flex items-center mb-4 text-lg font-semibold text-gray-900">
-                <Key />
-                <span className="ml-2">Craft API Settings</span>
-              </h2>
-              <form onSubmit={handleSaveSettings} className="space-y-4">
-                <div>
-                  <label className="block mb-1 text-sm font-medium text-gray-700">
-                    API Base URL
-                  </label>
-                  <input
-                    type="text"
-                    value={apiUrl}
-                    onChange={(e) => setApiUrl(e.target.value)}
-                    placeholder="https://connect.craft.do/links/XXXXX/api/v1"
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  />
-                </div>
-                <div>
-                  <label className="block mb-1 text-sm font-medium text-gray-700">
-                    API Key
-                  </label>
-                  <input
-                    type="password"
-                    value={apiKey}
-                    onChange={(e) => setApiKey(e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  />
-                </div>
-                <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
                   <button
-                    type="submit"
-                    className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700"
+                    onClick={() => setDarkMode((prev) => !prev)}
+                    className="px-3 py-1 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100 dark:hover:bg-slate-700"
                   >
-                    Save and Load Tasks
+                    {darkMode ? "Light Mode" : "Dark Mode"}
                   </button>
                   <button
-                    type="button"
-                    onClick={() => setShowSettings(false)}
-                    className="text-sm text-gray-500 hover:text-gray-700"
+                    onClick={() => setShowSettings(true)}
+                    className="inline-flex items-center px-3 py-2 text-sm font-medium text-indigo-700 border border-indigo-200 rounded-lg bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/40 dark:text-indigo-200 dark:border-indigo-600 dark:hover:bg-indigo-900/60"
                   >
-                    Cancel
+                    <Key />
+                    <span className="ml-2">API Settings</span>
                   </button>
                 </div>
-              </form>
+              </div>
             </div>
-          )}
 
-          <div className="grid gap-6 md:grid-cols-2">
-            {/* Today’s Schedule */}
-            <div className="p-6 bg-white shadow-lg rounded-2xl">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="flex items-center text-xl font-bold text-gray-900">
-                  <Clock />
-                  <span className="ml-2">Today&apos;s Schedule</span>
+            {!isConfigured && (
+              <div className="p-4 mb-6 text-sm text-blue-800 border border-blue-200 bg-blue-50 rounded-xl dark:bg-blue-950/40 dark:text-blue-100 dark:border-blue-900">
+                <div className="flex">
+                  <Info />
+                  <div className="ml-3">
+                    <p className="font-medium">
+                      Welcome. Add your Craft Tasks API info to begin.
+                    </p>
+                    <p className="mt-1">
+                      You will need your API base URL and an API key with access
+                      to your Craft Tasks.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {error && (
+              <div className="p-4 mb-6 text-sm text-red-800 border border-red-200 bg-red-50 rounded-xl dark:bg-red-950/40 dark:text-red-200 dark:border-red-900">
+                <div className="flex">
+                  <AlertTriangle />
+                  <div className="ml-3">
+                    <p className="font-medium">Something went wrong.</p>
+                    <p className="mt-1">{error}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {showSettings && (
+              <div className="p-6 mb-6 bg-white border border-gray-200 shadow-md rounded-2xl dark:bg-slate-900 dark:border-slate-700">
+                <h2 className="flex items-center mb-4 text-lg font-semibold text-gray-900 dark:text-slate-100">
+                  <Key />
+                  <span className="ml-2">Craft API Settings</span>
                 </h2>
-                <button
-                  onClick={() => {
-                    if (
-                      window.confirm(
-                        "Clear all time blocks for all days? This cannot be undone."
-                      )
-                    ) {
-                      setTimeBlocks([]);
-                      if (typeof window !== "undefined") {
-                        localStorage.removeItem("timeBlocks");
+                <form onSubmit={handleSaveSettings} className="space-y-4">
+                  <div>
+                    <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-slate-200">
+                      API Base URL
+                    </label>
+                    <input
+                      type="text"
+                      value={apiUrl}
+                      onChange={(e) => setApiUrl(e.target.value)}
+                      placeholder="https://connect.craft.do/links/XXXXX/api/v1"
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
+                    />
+                  </div>
+                  <div>
+                    <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-slate-200">
+                      API Key
+                    </label>
+                    <input
+                      type="password"
+                      value={apiKey}
+                      onChange={(e) => setApiKey(e.target.value)}
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <button
+                      type="submit"
+                      className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700"
+                    >
+                      Save and Load Tasks
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowSettings(false)}
+                      className="text-sm text-gray-500 hover:text-gray-700 dark:text-slate-300 dark:hover:text-slate-100"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            <div className="grid gap-6 md:grid-cols-2">
+              {/* Today’s Schedule */}
+              <div className="p-6 bg-white shadow-lg rounded-2xl dark:bg-slate-900 dark:border dark:border-slate-800">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="flex items-center text-xl font-bold text-gray-900 dark:text-slate-100">
+                    <Clock />
+                    <span className="ml-2">Today&apos;s Schedule</span>
+                  </h2>
+                  <button
+                    onClick={() => {
+                      if (
+                        window.confirm(
+                          "Clear all time blocks for all days? This cannot be undone."
+                        )
+                      ) {
+                        setTimeBlocks([]);
+                        if (typeof window !== "undefined") {
+                          localStorage.removeItem("timeBlocks");
+                        }
                       }
-                    }
-                  }}
-                  className="text-xs text-gray-500 hover:text-red-600"
-                >
-                  Reset all blocks
-                </button>
-              </div>
-              <p className="mb-3 text-xs text-gray-500">
-                Add tasks from the right panel, then edit the start and end
-                times. Use the checkbox to mark blocks as done.
-              </p>
-
-              {todayBlocks.length === 0 ? (
-                <div className="py-8 text-center text-gray-500">
-                  No time blocks scheduled yet. Add tasks from the right panel!
+                    }}
+                    className="text-xs text-gray-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400"
+                  >
+                    Reset all blocks
+                  </button>
                 </div>
-              ) : (
-                <div className="space-y-3">
-                  {todayBlocks.map((block) => (
-                    <div
-                      key={block.id}
-                      className="p-4 transition-colors border border-gray-200 rounded-lg hover:border-indigo-300"
-                    >
-                      <div className="flex items-start gap-3">
-                        <input
-                          type="checkbox"
-                          checked={!!block.isDone}
-                          onChange={() => toggleTimeBlockDone(block.id)}
-                          className="mt-1"
-                          aria-label={
-                            block.isDone ? "Mark as not done" : "Mark as done"
-                          }
-                        />
-                        <div className="flex-1">
-                          <div
-                            className={
-                              "mb-2 font-medium " +
-                              (block.isDone
-                                ? "text-gray-400 line-through"
-                                : "text-gray-900")
+                <p className="mb-3 text-xs text-gray-500 dark:text-slate-400">
+                  Add tasks from the right panel, then edit the start and end
+                  times. Use the checkbox to mark blocks as done.
+                </p>
+
+                {todayBlocks.length === 0 ? (
+                  <div className="py-8 text-center text-gray-500 dark:text-slate-400">
+                    No time blocks scheduled yet. Add tasks from the right
+                    panel.
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {todayBlocks.map((block) => (
+                      <div
+                        key={block.id}
+                        className="p-4 transition-colors border border-gray-200 rounded-lg hover:border-indigo-300 dark:border-slate-700 dark:hover:border-indigo-400 dark:bg-slate-900"
+                      >
+                        <div className="flex items-start gap-3">
+                          <input
+                            type="checkbox"
+                            checked={!!block.isDone}
+                            onChange={() => toggleTimeBlockDone(block.id)}
+                            className="mt-1"
+                            aria-label={
+                              block.isDone ? "Mark as not done" : "Mark as done"
                             }
+                          />
+                          <div className="flex-1">
+                            <div
+                              className={
+                                "mb-2 font-medium " +
+                                (block.isDone
+                                  ? "text-gray-400 line-through dark:text-slate-500"
+                                  : "text-gray-900 dark:text-slate-100")
+                              }
+                            >
+                              {cleanMarkdown(block.taskText)}
+                            </div>
+                            <div className="flex gap-2">
+                              <input
+                                type="time"
+                                value={block.startTime}
+                                onChange={(e) =>
+                                  updateTimeBlock(
+                                    block.id,
+                                    "startTime",
+                                    e.target.value
+                                  )
+                                }
+                                className="px-2 py-1 text-sm border border-gray-300 rounded dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
+                              />
+                              <span className="self-center text-gray-500 dark:text-slate-400">
+                                →
+                              </span>
+                              <input
+                                type="time"
+                                value={block.endTime}
+                                onChange={(e) =>
+                                  updateTimeBlock(
+                                    block.id,
+                                    "endTime",
+                                    e.target.value
+                                  )
+                                }
+                                className="px-2 py-1 text-sm border border-gray-300 rounded dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
+                              />
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => deleteTimeBlock(block.id)}
+                            className="p-2 text-red-600 transition-colors rounded-lg hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40"
+                            title="Remove time block"
                           >
-                            {cleanMarkdown(block.taskText)}
-                          </div>
-                          <div className="flex gap-2">
-                            <input
-                              type="time"
-                              value={block.startTime}
-                              onChange={(e) =>
-                                updateTimeBlock(
-                                  block.id,
-                                  "startTime",
-                                  e.target.value
-                                )
-                              }
-                              className="px-2 py-1 text-sm border border-gray-300 rounded"
-                            />
-                            <span className="self-center text-gray-500">→</span>
-                            <input
-                              type="time"
-                              value={block.endTime}
-                              onChange={(e) =>
-                                updateTimeBlock(
-                                  block.id,
-                                  "endTime",
-                                  e.target.value
-                                )
-                              }
-                              className="px-2 py-1 text-sm border border-gray-300 rounded"
-                            />
-                          </div>
+                            <div className="w-4 h-4">
+                              <Trash2 />
+                            </div>
+                          </button>
                         </div>
-                        <button
-                          onClick={() => deleteTimeBlock(block.id)}
-                          className="p-2 text-red-600 transition-colors rounded-lg hover:bg-red-50"
-                          title="Remove time block"
-                        >
-                          <div className="w-4 h-4">
-                            <Trash2 />
-                          </div>
-                        </button>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Craft Tasks */}
-            <div className="p-6 bg-white shadow-lg rounded-2xl">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-gray-900">Craft Tasks</h2>
-                <button
-                  onClick={() => fetchTasks(apiUrl, apiKey)}
-                  disabled={loading || !apiUrl || !apiKey}
-                  className="px-3 py-1 text-sm text-indigo-700 transition-colors bg-indigo-100 rounded-lg hover:bg-indigo-200 disabled:opacity-50"
-                >
-                  {loading ? "Loading..." : "Refresh"}
-                </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              {loading ? (
-                <div className="py-8 text-center">
-                  <div className="inline-block w-8 h-8 border-4 border-indigo-200 rounded-full border-t-indigo-600 animate-spin"></div>
-                  <p className="mt-2 text-gray-500">
-                    Loading tasks from Craft...
-                  </p>
+              {/* Craft Tasks */}
+              <div className="p-6 bg-white shadow-lg rounded-2xl dark:bg-slate-900 dark:border dark:border-slate-800">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100">
+                    Craft Tasks
+                  </h2>
+                  <button
+                    onClick={() => fetchTasks(apiUrl, apiKey)}
+                    disabled={loading || !apiUrl || !apiKey}
+                    className="px-3 py-1 text-sm text-indigo-700 transition-colors bg-indigo-100 rounded-lg hover:bg-indigo-200 disabled:opacity-50 dark:bg-indigo-900/40 dark:text-indigo-200 dark:hover:bg-indigo-900/60"
+                  >
+                    {loading ? "Loading..." : "Refresh"}
+                  </button>
                 </div>
-              ) : error && tasks.length === 0 ? (
-                <div className="text-sm text-red-700">
-                  Unable to load tasks. Please check your settings.
-                </div>
-              ) : tasks.length === 0 ? (
-                <div className="py-8 text-center text-gray-500">
-                  No tasks found. Make sure your Craft Tasks API has items.
-                </div>
-              ) : (
-                <div className="space-y-2 max-h-[480px] overflow-y-auto pr-2">
-                  {unscheduledTasks.map((task) => (
-                    <div
-                      key={task.id}
-                      className="flex items-center justify-between p-3 transition-colors border border-gray-200 rounded-lg hover:border-indigo-300"
-                    >
-                      <div className="flex-1 min-w-0 mr-3">
-                        <div className="text-sm font-medium text-gray-900 truncate">
-                          {cleanMarkdown(task.markdown)}
+
+                {loading ? (
+                  <div className="py-8 text-center">
+                    <div className="inline-block w-8 h-8 border-4 border-indigo-200 rounded-full border-t-indigo-600 animate-spin"></div>
+                    <p className="mt-2 text-gray-500 dark:text-slate-400">
+                      Loading tasks from Craft.
+                    </p>
+                  </div>
+                ) : error && tasks.length === 0 ? (
+                  <div className="text-sm text-red-700 dark:text-red-300">
+                    Unable to load tasks. Please check your settings.
+                  </div>
+                ) : tasks.length === 0 ? (
+                  <div className="py-8 text-center text-gray-500 dark:text-slate-400">
+                    No tasks found. Make sure your Craft Tasks API has items.
+                  </div>
+                ) : (
+                  <div className="space-y-2 max-h-[480px] overflow-y-auto pr-2">
+                    {unscheduledTasks.map((task) => (
+                      <div
+                        key={task.id}
+                        className="flex items-center justify-between p-3 transition-colors border border-gray-200 rounded-lg hover:border-indigo-300 dark:border-slate-700 dark:hover:border-indigo-400 dark:bg-slate-900"
+                      >
+                        <div className="flex-1 min-w-0 mr-3">
+                          <div className="text-sm font-medium text-gray-900 truncate dark:text-slate-100">
+                            {cleanMarkdown(task.markdown)}
+                          </div>
+                          {task.dueDate && (
+                            <div className="mt-1 text-xs text-gray-500 dark:text-slate-400">
+                              Due:{" "}
+                              {new Date(task.dueDate).toLocaleDateString(
+                                "en-US",
+                                {
+                                  month: "short",
+                                  day: "numeric",
+                                }
+                              )}
+                            </div>
+                          )}
                         </div>
-                        {task.dueDate && (
-                          <div className="mt-1 text-xs text-gray-500">
-                            Due:{" "}
-                            {new Date(task.dueDate).toLocaleDateString(
-                              "en-US",
-                              {
-                                month: "short",
-                                day: "numeric",
-                              }
-                            )}
-                          </div>
-                        )}
+                        <div className="flex items-center gap-2">
+                          <span className="px-2 py-0.5 text-xs text-gray-500 bg-gray-100 rounded-full dark:bg-slate-800 dark:text-slate-300">
+                            {task.scope}
+                          </span>
+                          <button
+                            onClick={() => addTimeBlock(task.id, task.markdown)}
+                            className="inline-flex items-center justify-center w-8 h-8 text-white bg-indigo-600 rounded-full hover:bg-indigo-700"
+                            title="Add to today"
+                          >
+                            <div className="w-4 h-4">
+                              <Plus />
+                            </div>
+                          </button>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="px-2 py-0.5 text-xs text-gray-500 bg-gray-100 rounded-full">
-                          {task.scope}
-                        </span>
-                        <button
-                          onClick={() => addTimeBlock(task.id, task.markdown)}
-                          className="inline-flex items-center justify-center w-8 h-8 text-white bg-indigo-600 rounded-full hover:bg-indigo-700"
-                          title="Add to today"
-                        >
-                          <div className="w-4 h-4">
-                            <Plus />
-                          </div>
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

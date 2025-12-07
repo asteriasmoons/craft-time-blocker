@@ -114,41 +114,7 @@ export default function Home() {
   const [isConfigured, setIsConfigured] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const savedUrl = localStorage.getItem("craftApiUrl");
-      const savedKey = localStorage.getItem("craftApiKey");
-      const savedBlocks = localStorage.getItem("timeBlocks");
-
-      if (savedUrl && savedKey) {
-        setApiUrl(savedUrl);
-        setApiKey(savedKey);
-        setIsConfigured(true);
-        fetchTasks(savedUrl, savedKey);
-      }
-      if (savedBlocks) {
-        const parsedBlocks = JSON.parse(savedBlocks);
-        const sanitizedBlocks = parsedBlocks.map((block) => ({
-          ...block,
-          taskText: cleanMarkdown(block.taskText || ""),
-          isDone: !!block.isDone,
-        }));
-        setTimeBlocks(sanitizedBlocks);
-      }
-    }
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const sanitizedBlocks = timeBlocks.map((block) => ({
-      ...block,
-      taskText: cleanMarkdown(block.taskText || ""),
-    }));
-
-    localStorage.setItem("timeBlocks", JSON.stringify(sanitizedBlocks));
-  }, [timeBlocks]);
-
+  // Markdown cleaner (with checkbox handling)
   const cleanMarkdown = (text = "") => {
     return (
       text
@@ -181,11 +147,51 @@ export default function Home() {
     );
   };
 
+  // Load saved config + blocks on mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedUrl = localStorage.getItem("craftApiUrl");
+      const savedKey = localStorage.getItem("craftApiKey");
+      const savedBlocks = localStorage.getItem("timeBlocks");
+
+      if (savedUrl && savedKey) {
+        setApiUrl(savedUrl);
+        setApiKey(savedKey);
+        setIsConfigured(true);
+        fetchTasks(savedUrl, savedKey);
+      }
+
+      if (savedBlocks) {
+        const parsedBlocks = JSON.parse(savedBlocks);
+        const sanitizedBlocks = parsedBlocks.map((block) => ({
+          ...block,
+          taskText: cleanMarkdown(block.taskText || ""),
+          isDone: !!block.isDone,
+        }));
+        setTimeBlocks(sanitizedBlocks);
+      }
+    }
+  }, []);
+
+  // Persist blocks whenever they change
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const sanitizedBlocks = timeBlocks.map((block) => ({
+      ...block,
+      taskText: cleanMarkdown(block.taskText || ""),
+    }));
+
+    localStorage.setItem("timeBlocks", JSON.stringify(sanitizedBlocks));
+  }, [timeBlocks]);
+
+  // FIXED fetchTasks: uses .items and preserves scopes
   const fetchTasks = async (url, key) => {
     setLoading(true);
     setError("");
     try {
       const scopes = ["active", "upcoming", "inbox"];
+
       const results = await Promise.allSettled(
         scopes.map((scope) =>
           fetch(`${url}/tasks?scope=${scope}`, {
@@ -196,9 +202,9 @@ export default function Home() {
             },
           }).then(async (res) => {
             if (!res.ok) {
-              const text = await res.text();
+              const errorText = await res.text();
               throw new Error(
-                `Failed for scope "${scope}": ${res.status} ${res.statusText}. ${text}`
+                `Failed for scope "${scope}": ${res.status} ${res.statusText}. ${errorText}`
               );
             }
             return res.json();
@@ -206,17 +212,30 @@ export default function Home() {
         )
       );
 
-      const allTasks = results
-        .filter((r) => r.status === "fulfilled")
-        .flatMap((r) => r.value.tasks || [])
-        .filter((t) => t && t.id && t.markdown)
-        .map((t) => ({
-          id: t.id,
-          markdown: cleanMarkdown(t.markdown),
-          dueDate: t.dueDate || null,
-          scope: t.scope || "active",
-        }));
+      let allTasks = [];
+      let hasError = false;
+      let errorMsg = "";
 
+      results.forEach((result, index) => {
+        if (result.status === "fulfilled") {
+          const scopeTasks = (result.value.items || []).map((t) => ({
+            id: t.id,
+            markdown: cleanMarkdown(t.markdown || ""),
+            dueDate: t.dueDate || null,
+            scope: scopes[index],
+          }));
+          allTasks = [...allTasks, ...scopeTasks];
+        } else {
+          hasError = true;
+          errorMsg = result.reason?.message || "Unknown API error";
+        }
+      });
+
+      if (allTasks.length === 0 && hasError) {
+        throw new Error(`API Error: ${errorMsg}`);
+      }
+
+      // Deduplicate by id
       const seen = new Set();
       const unique = allTasks.filter((task) => {
         if (seen.has(task.id)) return false;
@@ -224,6 +243,7 @@ export default function Home() {
         return true;
       });
 
+      // Sort: due-date first, then alphabetical
       unique.sort((a, b) => {
         const aHasDue = !!a.dueDate;
         const bHasDue = !!b.dueDate;
@@ -236,12 +256,12 @@ export default function Home() {
       });
 
       setTasks(unique);
+
+      if (unique.length === 0) {
+        setError("No tasks found in Craft. Try creating some tasks first!");
+      }
     } catch (err) {
-      console.error(err);
-      setError(
-        err.message ||
-          "Failed to fetch tasks. Please check your API URL and key."
-      );
+      setError(`Failed to load tasks: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -249,17 +269,29 @@ export default function Home() {
 
   const handleSaveSettings = (e) => {
     e.preventDefault();
-    if (!apiUrl || !apiKey) {
-      setError("Please provide both the API base URL and API key.");
+
+    if (!apiUrl.trim()) {
+      setError("Please provide the API base URL.");
       return;
     }
-    if (typeof window !== "undefined") {
-      localStorage.setItem("craftApiUrl", apiUrl);
-      localStorage.setItem("craftApiKey", apiKey);
+    if (!apiKey.trim()) {
+      setError("Please provide your API key.");
+      return;
     }
+
+    const cleanUrl = apiUrl.trim().replace(/\/$/, "");
+    const cleanKey = apiKey.trim();
+
+    if (typeof window !== "undefined") {
+      localStorage.setItem("craftApiUrl", cleanUrl);
+      localStorage.setItem("craftApiKey", cleanKey);
+    }
+
+    setApiUrl(cleanUrl);
+    setApiKey(cleanKey);
     setIsConfigured(true);
     setShowSettings(false);
-    fetchTasks(apiUrl, apiKey);
+    fetchTasks(cleanUrl, cleanKey);
   };
 
   const addTimeBlock = (taskId, taskText) => {
@@ -273,12 +305,12 @@ export default function Home() {
       date: new Date().toISOString().split("T")[0],
       isDone: false,
     };
-    setTimeBlocks([...timeBlocks, newBlock]);
+    setTimeBlocks((prev) => [...prev, newBlock]);
   };
 
   const updateTimeBlock = (blockId, field, value) => {
-    setTimeBlocks(
-      timeBlocks.map((block) =>
+    setTimeBlocks((prev) =>
+      prev.map((block) =>
         block.id === blockId ? { ...block, [field]: value } : block
       )
     );
@@ -293,7 +325,7 @@ export default function Home() {
   };
 
   const deleteTimeBlock = (blockId) => {
-    setTimeBlocks(timeBlocks.filter((block) => block.id !== blockId));
+    setTimeBlocks((prev) => prev.filter((block) => block.id !== blockId));
   };
 
   const getTodayBlocks = () => {
@@ -356,6 +388,18 @@ export default function Home() {
             </div>
           )}
 
+          {error && (
+            <div className="p-4 mb-6 text-sm text-red-800 border border-red-200 bg-red-50 rounded-xl">
+              <div className="flex">
+                <AlertTriangle />
+                <div className="ml-3">
+                  <p className="font-medium">Something went wrong.</p>
+                  <p className="mt-1">{error}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {showSettings && (
             <div className="p-6 mb-6 bg-white border border-gray-200 shadow-md rounded-2xl">
               <h2 className="flex items-center mb-4 text-lg font-semibold text-gray-900">
@@ -371,7 +415,7 @@ export default function Home() {
                     type="text"
                     value={apiUrl}
                     onChange={(e) => setApiUrl(e.target.value)}
-                    placeholder="https://api.craft.do/v1"
+                    placeholder="https://connect.craft.do/links/XXXXX/api/v1"
                     className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   />
                 </div>
@@ -405,19 +449,8 @@ export default function Home() {
             </div>
           )}
 
-          {error && (
-            <div className="p-4 mb-6 text-sm text-red-800 border border-red-200 bg-red-50 rounded-xl">
-              <div className="flex">
-                <AlertTriangle />
-                <div className="ml-3">
-                  <p className="font-medium">Something went wrong.</p>
-                  <p className="mt-1">{error}</p>
-                </div>
-              </div>
-            </div>
-          )}
-
           <div className="grid gap-6 md:grid-cols-2">
+            {/* Today’s Schedule */}
             <div className="p-6 bg-white shadow-lg rounded-2xl">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="flex items-center text-xl font-bold text-gray-900">
@@ -523,12 +556,13 @@ export default function Home() {
               )}
             </div>
 
+            {/* Craft Tasks */}
             <div className="p-6 bg-white shadow-lg rounded-2xl">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold text-gray-900">Craft Tasks</h2>
                 <button
                   onClick={() => fetchTasks(apiUrl, apiKey)}
-                  disabled={loading}
+                  disabled={loading || !apiUrl || !apiKey}
                   className="px-3 py-1 text-sm text-indigo-700 transition-colors bg-indigo-100 rounded-lg hover:bg-indigo-200 disabled:opacity-50"
                 >
                   {loading ? "Loading..." : "Refresh"}
@@ -542,7 +576,7 @@ export default function Home() {
                     Loading tasks from Craft...
                   </p>
                 </div>
-              ) : error ? (
+              ) : error && tasks.length === 0 ? (
                 <div className="text-sm text-red-700">
                   Unable to load tasks. Please check your settings.
                 </div>

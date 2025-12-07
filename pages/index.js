@@ -156,7 +156,12 @@ export default function CraftTimeBlocker() {
         fetchTasks(savedUrl, savedKey);
       }
       if (savedBlocks) {
-        setTimeBlocks(JSON.parse(savedBlocks));
+        const parsedBlocks = JSON.parse(savedBlocks);
+        const sanitizedBlocks = parsedBlocks.map((block) => ({
+          ...block,
+          taskText: cleanMarkdown(block.taskText || ""),
+        }));
+        setTimeBlocks(sanitizedBlocks);
       }
     }
   }, []);
@@ -166,6 +171,24 @@ export default function CraftTimeBlocker() {
       localStorage.setItem("timeBlocks", JSON.stringify(timeBlocks));
     }
   }, [timeBlocks]);
+
+  const cleanMarkdown = (text = "") => {
+    return text
+      .replace(/```[\s\S]*?```/g, " ") // Remove fenced code blocks
+      .replace(/`([^`]*)`/g, "$1") // Inline code
+      .replace(/!\[[^\]]*\]\([^\)]*\)/g, "") // Images
+      .replace(/\[([^\]]+)\]\([^\)]*\)/g, "$1") // Links
+      .replace(/^\s{0,3}[-*+]\s+/gm, "") // Unordered list markers
+      .replace(/^\s{0,3}\d+\.\s+/gm, "") // Ordered list markers
+      .replace(/^\s{0,3}#+\s+/gm, "") // Headings
+      .replace(/^>\s+/gm, "") // Blockquotes
+      .replace(/\[\s*[xX]?\s*\]/g, "") // Checkbox markers
+      .replace(/[\*\_\~\#]/g, "") // Emphasis characters
+      .replace(/<[^>]+>/g, "") // Strip HTML tags
+      .replace(/\n+/g, " ") // Normalize newlines
+      .replace(/\s{2,}/g, " ") // Extra whitespace
+      .trim();
+  };
 
   const fetchTasks = async (url, key) => {
     setLoading(true);
@@ -201,6 +224,7 @@ export default function CraftTimeBlocker() {
           const scopeTasks = (result.value.items || []).map((t) => ({
             ...t,
             scope: scopes[index],
+            markdown: cleanMarkdown(t.markdown),
           }));
           allTasks = [...allTasks, ...scopeTasks];
         } else {
@@ -265,10 +289,11 @@ export default function CraftTimeBlocker() {
   };
 
   const addTimeBlock = (taskId, taskText) => {
+    const sanitizedText = cleanMarkdown(taskText);
     const newBlock = {
       id: Date.now(),
       taskId,
-      taskText,
+      taskText: sanitizedText,
       startTime: "09:00",
       endTime: "10:00",
       date: new Date().toISOString().split("T")[0],
@@ -293,10 +318,6 @@ export default function CraftTimeBlocker() {
     return timeBlocks
       .filter((block) => block.date === today)
       .sort((a, b) => a.startTime.localeCompare(b.startTime));
-  };
-
-  const cleanMarkdown = (text) => {
-    return text.replace(/[\*\_\[\]\(\)\#]/g, "").trim();
   };
 
   if (!isConfigured || showSettings) {

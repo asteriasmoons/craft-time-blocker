@@ -177,21 +177,37 @@ export default function CraftTimeBlocker() {
   }, [timeBlocks]);
 
   const cleanMarkdown = (text = "") => {
-    return text
-      .replace(/```[\s\S]*?```/g, " ") // Remove fenced code blocks
-      .replace(/`([^`]*)`/g, "$1") // Inline code
-      .replace(/!\[[^\]]*\]\([^\)]*\)/g, "") // Images
-      .replace(/\[([^\]]+)\]\([^\)]*\)/g, "$1") // Links
-      .replace(/^\s{0,3}[-*+]\s+/gm, "") // Unordered list markers
-      .replace(/^\s{0,3}\d+\.\s+/gm, "") // Ordered list markers
-      .replace(/^\s{0,3}#+\s+/gm, "") // Headings
-      .replace(/^>\s+/gm, "") // Blockquotes
-      .replace(/[\*\_\~\#]/g, "") // Emphasis characters
-      .replace(/<[^>]+>/g, "") // Strip HTML tags
-      .replace(/\n+/g, " ") // Normalize newlines
-      .replace(/\s{2,}/g, " ") // Extra whitespace
-      .trim();
+    return (
+      text
+        // Remove fenced code blocks
+        .replace(/```[\s\S]*?```/g, " ")
+        // Inline code
+        .replace(/`([^`]*)`/g, "$1")
+        // Images ![alt](url)
+        .replace(/!\[[^\]]*\]\([^\)]*\)/g, "")
+        // Links [text](url) -> text
+        .replace(/\[([^\]]+)\]\([^\)]*\)/g, "$1")
+        // Checkbox task lists first: "- [ ] Task" or "- [x] Task"
+        .replace(/^\s{0,3}[-*+]\s+\[[ xX]\]\s+/gm, "")
+        // Then plain unordered list markers "- Task"
+        .replace(/^\s{0,3}[-*+]\s+/gm, "")
+        // Ordered lists "1. Task"
+        .replace(/^\s{0,3}\d+\.\s+/gm, "")
+        // Headings "# Heading"
+        .replace(/^\s{0,3}#+\s+/gm, "")
+        // Blockquotes "> quote"
+        .replace(/^>\s+/gm, "")
+        // Emphasis / strikethrough characters
+        .replace(/[\*\_\~\#]/g, "")
+        // Strip any HTML tags
+        .replace(/<[^>]+>/g, "")
+        // Normalize newlines and whitespace
+        .replace(/\n+/g, " ")
+        .replace(/\s{2,}/g, " ")
+        .trim()
+    );
   };
+
 
   const fetchTasks = async (url, key) => {
     setLoading(true);

@@ -186,8 +186,6 @@ export default function CraftTimeBlocker() {
       .replace(/^\s{0,3}\d+\.\s+/gm, "") // Ordered list markers
       .replace(/^\s{0,3}#+\s+/gm, "") // Headings
       .replace(/^>\s+/gm, "") // Blockquotes
-      .replace(/(^|\s)[-*+]?\s*\[\s*[xX]?\s*\]\s*/g, "$1") // Checkbox markers (including bullets)
-      .replace(/\[\s*\]/g, "") // Empty bracket pairs
       .replace(/[\*\_\~\#]/g, "") // Emphasis characters
       .replace(/<[^>]+>/g, "") // Strip HTML tags
       .replace(/\n+/g, " ") // Normalize newlines

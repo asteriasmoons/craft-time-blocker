@@ -156,7 +156,12 @@ export default function CraftTimeBlocker() {
         fetchTasks(savedUrl, savedKey);
       }
       if (savedBlocks) {
-        setTimeBlocks(JSON.parse(savedBlocks));
+        const parsedBlocks = JSON.parse(savedBlocks);
+        const sanitizedBlocks = parsedBlocks.map((block) => ({
+          ...block,
+          taskText: cleanMarkdown(block.taskText || ""),
+        }));
+        setTimeBlocks(sanitizedBlocks);
       }
     }
   }, []);

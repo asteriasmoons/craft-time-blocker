@@ -168,7 +168,11 @@ export default function CraftTimeBlocker() {
 
   useEffect(() => {
     if (typeof window !== "undefined" && timeBlocks.length > 0) {
-      localStorage.setItem("timeBlocks", JSON.stringify(timeBlocks));
+      const sanitizedBlocks = timeBlocks.map((block) => ({
+        ...block,
+        taskText: cleanMarkdown(block.taskText || ""),
+      }));
+      localStorage.setItem("timeBlocks", JSON.stringify(sanitizedBlocks));
     }
   }, [timeBlocks]);
 

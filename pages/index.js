@@ -115,6 +115,10 @@ export default function Home() {
   const [showSettings, setShowSettings] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
 
+  // NEW: pagination state for tasks list
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 25; // how many tasks per page
+
   // Markdown cleaner (with checkbox handling)
   const cleanMarkdown = (text = "") => {
     return (
@@ -178,6 +182,11 @@ export default function Home() {
       }
     }
   }, []);
+
+  // Reset to first page whenever tasks change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [tasks]);
 
   // Persist blocks whenever they change
   useEffect(() => {
@@ -347,8 +356,16 @@ export default function Home() {
 
   const todayBlocks = getTodayBlocks();
 
-  // NEW: always show all tasks in the right panel
+  // Always show all tasks
   const visibleTasks = tasks;
+
+  // Pagination for visibleTasks
+  const totalPages = Math.max(1, Math.ceil(visibleTasks.length / pageSize));
+  const startIndex = (currentPage - 1) * pageSize;
+  const pagedTasks = visibleTasks.slice(startIndex, startIndex + pageSize);
+
+  const canGoPrev = currentPage > 1;
+  const canGoNext = currentPage < totalPages;
 
   return (
     <>
@@ -610,46 +627,77 @@ export default function Home() {
                     No tasks found. Make sure your Craft Tasks API has items.
                   </div>
                 ) : (
-                  <div className="space-y-2 max-h-[480px] overflow-y-auto pr-2">
-                    {visibleTasks.map((task) => (
-                      <div
-                        key={task.id}
-                        className="flex items-center justify-between p-3 transition-colors border border-gray-200 rounded-lg hover:border-indigo-300 dark:border-slate-700 dark:hover:border-indigo-400 dark:bg-slate-900"
-                      >
-                        <div className="flex-1 min-w-0 mr-3">
-                          <div className="text-sm font-medium text-gray-900 truncate dark:text-slate-100">
-                            {cleanMarkdown(task.markdown)}
+                  <>
+                    <div className="space-y-2 max-h-[480px] overflow-y-auto pr-2">
+                      {pagedTasks.map((task) => (
+                        <div
+                          key={task.id}
+                          className="flex items-center justify-between p-3 transition-colors border border-gray-200 rounded-lg hover:border-indigo-300 dark:border-slate-700 dark:hover:border-indigo-400 dark:bg-slate-900"
+                        >
+                          <div className="flex-1 min-w-0 mr-3">
+                            <div className="text-sm font-medium text-gray-900 truncate dark:text-slate-100">
+                              {cleanMarkdown(task.markdown)}
+                            </div>
+                            {task.dueDate && (
+                              <div className="mt-1 text-xs text-gray-500 dark:text-slate-400">
+                                Due:{" "}
+                                {new Date(task.dueDate).toLocaleDateString(
+                                  "en-US",
+                                  {
+                                    month: "short",
+                                    day: "numeric",
+                                  }
+                                )}
+                              </div>
+                            )}
                           </div>
-                          {task.dueDate && (
-                            <div className="mt-1 text-xs text-gray-500 dark:text-slate-400">
-                              Due:{" "}
-                              {new Date(task.dueDate).toLocaleDateString(
-                                "en-US",
-                                {
-                                  month: "short",
-                                  day: "numeric",
-                                }
-                              )}
-                            </div>
-                          )}
+                          <div className="flex items-center gap-2">
+                            <span className="px-2 py-0.5 text-xs text-gray-500 bg-gray-100 rounded-full dark:bg-slate-800 dark:text-slate-300">
+                              {task.scope}
+                            </span>
+                            <button
+                              onClick={() =>
+                                addTimeBlock(task.id, task.markdown)
+                              }
+                              className="inline-flex items-center justify-center w-8 h-8 text-white bg-indigo-600 rounded-full hover:bg-indigo-700"
+                              title="Add to today"
+                            >
+                              <div className="w-4 h-4">
+                                <Plus />
+                              </div>
+                            </button>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className="px-2 py-0.5 text-xs text-gray-500 bg-gray-100 rounded-full dark:bg-slate-800 dark:text-slate-300">
-                            {task.scope}
-                          </span>
-                          <button
-                            onClick={() => addTimeBlock(task.id, task.markdown)}
-                            className="inline-flex items-center justify-center w-8 h-8 text-white bg-indigo-600 rounded-full hover:bg-indigo-700"
-                            title="Add to today"
-                          >
-                            <div className="w-4 h-4">
-                              <Plus />
-                            </div>
-                          </button>
-                        </div>
+                      ))}
+                    </div>
+
+                    {/* Pagination controls */}
+                    <div className="flex items-center justify-between mt-3 text-xs text-gray-500 dark:text-slate-400">
+                      <span>
+                        Page {currentPage} of {totalPages}
+                      </span>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() =>
+                            canGoPrev && setCurrentPage((p) => p - 1)
+                          }
+                          disabled={!canGoPrev}
+                          className="px-2 py-1 border border-gray-200 rounded disabled:opacity-40 bg-gray-50 hover:bg-gray-100 dark:bg-slate-800 dark:border-slate-700 dark:hover:bg-slate-700"
+                        >
+                          Prev
+                        </button>
+                        <button
+                          onClick={() =>
+                            canGoNext && setCurrentPage((p) => p + 1)
+                          }
+                          disabled={!canGoNext}
+                          className="px-2 py-1 border border-gray-200 rounded disabled:opacity-40 bg-gray-50 hover:bg-gray-100 dark:bg-slate-800 dark:border-slate-700 dark:hover:bg-slate-700"
+                        >
+                          Next
+                        </button>
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  </>
                 )}
               </div>
             </div>

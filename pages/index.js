@@ -117,7 +117,7 @@ export default function Home() {
 
   // NEW: pagination state for tasks list
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 25; // how many tasks per page
+  const pageSize = 15; // how many tasks per page
 
   // Markdown cleaner (with checkbox handling)
   const cleanMarkdown = (text = "") => {

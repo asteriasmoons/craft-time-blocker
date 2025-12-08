@@ -346,9 +346,9 @@ export default function Home() {
   };
 
   const todayBlocks = getTodayBlocks();
-  const unscheduledTasks = tasks.filter(
-    (task) => !timeBlocks.some((block) => block.taskId === task.id)
-  );
+
+  // NEW: always show all tasks in the right panel
+  const visibleTasks = tasks;
 
   return (
     <>
@@ -611,7 +611,7 @@ export default function Home() {
                   </div>
                 ) : (
                   <div className="space-y-2 max-h-[480px] overflow-y-auto pr-2">
-                    {unscheduledTasks.map((task) => (
+                    {visibleTasks.map((task) => (
                       <div
                         key={task.id}
                         className="flex items-center justify-between p-3 transition-colors border border-gray-200 rounded-lg hover:border-indigo-300 dark:border-slate-700 dark:hover:border-indigo-400 dark:bg-slate-900"
